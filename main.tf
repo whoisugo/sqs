@@ -10,6 +10,10 @@ resource "aws_sqs_queue" "terraform_queue" {
   message_retention_seconds = 604800
   receive_wait_time_seconds = 0
   visibility_timeout_seconds = 300
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.terraform_queue_deadletter.arn
+    maxReceiveCount     = 5
+  })
 
 }
 
@@ -31,7 +35,10 @@ data "aws_iam_policy_document" "queue" {
       "sqs:ReceiveMessage",
       "sqs:SendMessage",
     ]
-  
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
   }
 }
 
@@ -62,7 +69,10 @@ data "aws_iam_policy_document" "deadletter_queue" {
       "sqs:ReceiveMessage",
       "sqs:SendMessage",
     ]
- 
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
   }
 }
 
